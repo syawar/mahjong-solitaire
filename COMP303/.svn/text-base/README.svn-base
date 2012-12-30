@@ -1,0 +1,208 @@
+*********************************** HOW TO ***********************************
+**How to run Crouching Tile Hidden Mahjong 
+Run from console with, java -jar crouching-tile-hidden-mahjong.jar
+Run from Main in src -> mahjong -> Main
+Run from run configuration with arguments: 
+
+[-h | -seed n | -tiledir dir | -tileset tiles.set | -f board.layout]
+
+  Or: -batch [simple|normal|cheating] [random|solvable] n
+
+  Or: -completeReport n
+
+	 Where:
+		 -h 			 Display this help.
+		 -seed n 		 Specify random seed
+		 -tiledir dir 		 Directory with tile files (ends in a path separator)
+					 (currently=Tiles\)
+		 -tileset filename 	 Name of file that maps tiles to image files
+					 (currently=Tiles\tiles.set)
+		 -f filename 		 Load the specified board layout
+					 (currently=Layouts\turtle.layout)
+
+		 -batch [simple|normal|cheating] [random|solvable] n
+					 Run the specified AI on n boards 
+					 (purely random construction or solvable) and report.
+
+		 -completeReport  n
+					 Returns a report on all different AI modes and type of 
+					 board on n boards. 
+					 For each combination, it runs the half of the tests
+					 on turtle layouts and half of ziggurat layouts.
+
+****************************** DIFFICULTY LEVELS *****************************
+Easy:
+   No countdown
+   No bonuses
+Medium:
+   Countdown of 5 minutes
+   Bonus of 10 seconds when matching tiles found
+Expert:
+   Countodwn of 5 minutes and 10 seconds
+   Bonus of 3 seconds when matching tiles found
+
+************************************* GUI *************************************
+
+**CLOCK
+In easy mode (default): The clock shows the time elapsed since the first user click.
+In medium & expert mode: The clock shows the remaining time.
+
+
+**MENU> NEW GAME
+A pop-up window is shown.
+User is asked to cancel or continue.
+User can enter its name, selects the desired
+layout, and the difficulty level (Easy, medium, expert).
+Then, user can either start a game with those properties or quit.
+
+**MENU> LOAD
+A pop-up window is shown where user can select previously saved games.
+User can delete a saved game, select it (to play it) or cancel (go back to current game).
+
+**MENU> SAVE
+A pop-up window is shown where user have to enter name of file.
+If the user entered nothing, the pop-up window is reshowed.
+User can save, or cancel (go back to current game).
+
+**MENU> SCORES
+When SCORES is clicked, a pop-up window is shown where user can
+select the different layouts and different levels.
+
+**MENU> QUIT
+The application ends.
+
+**PAUSE/REMOVE
+When this button is clicked for the first time, the board becomes not
+visible and not clickable, and the clock is paused. When this button
+is clicked for the second time, the game comes back to normal.
+
+**UNDO
+Cancels last pair-matching made, if possible.
+
+**REDO
+Redo a "undo-ed" pair-matching (cancelled by Re-do Previous Mode)
+
+**HINT MODE
+Will highlight all possible pair-matching.
+
+**AI> Random AI
+Once the user clicks anywhere on board, the random AI will begin solving board.
+The solving can be paused by clicking on TERMINATING AI.
+
+**AI> Normal AI
+Once the user clicks anywhere on board, the normal AI will begin solving board.
+The solving can be paused by clicking on TERMINATING AI.
+
+**AI> Cheating AI
+Once the user clicks anywhere on board, the cheating AI will begin solving board.
+The solving can be paused by clicking on TERMINATING AI.
+
+********************************* ALGORITHMS *********************************
+**SOLVEABLE BOARDS
+Algorithm which ensure that a given board will be solvable.
+
+The solvable algorithm takes a randomly generated board, selects a free 
+tile pair and removes it (1).
+(1) is repeated until a deadlock is hit or game solved.
+On deadlock, two random free tiles are selected (t1 & t2).
+t2 is then swapped with a non-free tile matching t1 and (1) is initiated again.
+The solvable algorithm should be able to generates all solvable boards 
+since it traverses a random path through the solution tree
+of a board, re-organizing the tiles to fit a particular solution.
+However, since only one path is traversed at the generation, the amount of
+time that will be required to generate all unique boards will be highly impractical.
+
+**RANDOM AI
+AI which tries to solve the board by randomly choosing pair of free tiles.
+
+**NORMAL AI
+AI which tries to solve the board by using a strategy that selects more 
+intelligently from the list of all available matches at each point in the game.
+
+The normal AI will remove tile pairs until the end of the game.
+Every time a pair of tile is removed, it revaluates the most prioritised pair to remove.
+Steps:
+	1.	It instantiates a list of all possible pairs of tiles that can be matched.
+	
+	2.	It goes through “Check rules”.
+	If a pair of matching tiles satisfies one of those rules, it is returned right away to be removed.
+		a.	Check rule 1
+		If there is a complete group of free tiles, prioritise one pair.
+		
+		b.	Check rule 2
+		If there is a pair of matching free tiles, and that the other pair of this group had already been removed, prioritise this pair.
+		
+	3.	If the check rules didn’t return any highly-prioritised choice, it goes through “Priority rules”.
+	Those rules are made to shrink the list of choices of matching pairs.
+	If the rules shrank it to one pair, return that pair.
+	If, after those rules, the list still contains more than one possible pair, randomly choose one, and return it.
+	Note: The order of the priority rules is important.
+		
+		a.	Priority rule 1
+		If there are three free tiles of the same group on the board: A, B, C
+		and if the fouth tile is visible: D
+			i.	and if it is visibly known that A blocks D,
+			then shrink the list of choices to the pairs of tiles (A, B) and (A, C)
+			
+			ii.	and if it is visibly known that both A and B blocks D, 
+			then shrink the list of choices to the pair (A, B)
+		
+		b.	Priority rule 2
+		If that doesn't empty the list of choices, 
+		remove in the list of choices all the matching pairs which are of groups with exactly 3 free tiles.
+		
+			Logic behind this rule:
+			When this rule is reached, it already been through the priority rule 1, which ensures a smart choice for cases of 3 free tiles of same group. To prevent “blocking situations”, we try to pair tiles of 3 free tiles only when we know what the situation is with the 4th tile, or when we don’t have the choice (when there are no other pair of three tile).
+			
+		c.	Priority rule 3
+		The pairs with highest obstruction value are kept in the list of choices. 
+		The obstruction value of a pair of tiles is 
+		
+		d.	Priority rule 4
+		The pairs with the highest column shrinking value are kept in the list of choices.
+		The column shrinking value of a pair of tiles is the number of tiles in the columns occupied by both tiles of the pair.
+		
+		e.	Priority rule 5
+		The pairs with the highest row shrinking value are kept in the list of choices.
+		The row shrinking value of a pair of tiles is the number of tiles in the rows occupied by both tiles of the pair.
+
+
+**CHEATING AI
+AI which tries to solve the board by using a cheating strategy: by being able 
+to see tiles that are currently hidden and using that extra information 
+to make better choices. 
+
+The cheater AI has two phases.
+Phase 1: Analysis
+On this phase the algorithm goes through all the tiles and and sets possible groupings. Groupings are possible pairing combinations of tiles such that when they are paired and removes, the remaining tiles of same value but different sub-index, can be paired and removed, that is, their placement is not on top of each other.The groupings are divided into 3 categories by the sub-index of tiles of same value:
+Group 1: (0,1) & (2,3)
+Group 2: (0,2) & (1,3)
+Group 3: (0,3) & (1,2)
+
+Phase 2: Find Solution
+The algorithm then recursively finds a solution to the board as follows:
+Solve(Board b)
+	1)  isSolved = false;
+	2) While board has at-least one pair of free tiles
+		i) freeTiles --> get all free tiles with at-least pair on the current board and is not solved
+			a) if only one pair 
+			--> check if grouping is possible and remove
+			--> if board is not empty, recursive call 
+			--> if board is in deadlock reverse moves made
+			--> if board is empty, break and set isSolved = true
+			b) if 3 tiles present of same value
+			-->for all possible groupings:
+			--> check if grouping is possible and remove
+			--> if board is not empty, recursive call 
+			--> if board is in deadlock reverse moves made
+			--> if board is empty, break and set isSolved = true
+			c) if 4 tiles present of same value
+			--> pair and remove all
+			--> if board is not empty, recursive call 
+			--> if board is in deadlock reverse moves made
+			--> if board is empty, break and set isSolved = true
+		
+	3) If board is empty set isSolved to true else deadlocked
+
+Basically, the algorithm goes through the free tiles and checks which possible pairing can be done and then recursively removes those tiles to see if a solution is reached.
+
